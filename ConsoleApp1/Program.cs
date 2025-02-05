@@ -1,11 +1,88 @@
 ﻿using System;
 
+abstract class BankAccount
+{
+    private string _userName;
+    private string _password;
+    private decimal _balance;
+
+    public BankAccount(string userName, string password)
+    {
+        _userName = userName;
+        _password = password;
+        _balance = 0;
+    }
+
+    // Getter for UserName
+    public string GetUserName()
+    {
+        return _userName;
+    }
+
+    // Getter for Password
+    public string GetPassword()
+    {
+        return _password;
+    }
+
+    // Getter for Balance
+    public decimal GetBalance()
+    {
+        return _balance;
+    }
+
+    // Setter for Balance
+    protected void SetBalance(decimal amount)
+    {
+        _balance = amount;
+    }
+
+    public void Deposit(decimal amount)
+    {
+        if (amount > 0)
+        {
+            _balance += amount;
+            Console.WriteLine($"Deposit successful! New balance: {_balance:C}");
+        }
+        else
+        {
+            Console.WriteLine("Invalid deposit amount.");
+        }
+    }
+
+    public abstract void Withdraw(decimal amount);
+
+    // check balance
+    public void CheckBalance()
+    {
+        Console.WriteLine($"Your current balance is: {_balance:C}");
+    }
+}
+
+class SavingsAccount : BankAccount
+{
+    private const decimal MinimumBalance = 50; 
+
+    // Constructor
+    public SavingsAccount(string userName, string password) : base(userName, password) { }
+
+    public override void Withdraw(decimal amount)
+    {
+        if (amount > 0 && (GetBalance() - amount) >= MinimumBalance)
+        {
+            SetBalance(GetBalance() - amount);
+            Console.WriteLine($"Withdrawal successful! New balance: {GetBalance():C}");
+        }
+        else
+        {
+            Console.WriteLine($"Withdrawal failed! You must maintain a minimum balance of {MinimumBalance:C}.");
+        }
+    }
+}
+
 class BankSystem
 {
-    // Variables to store user details
-    static string userName = string.Empty;
-    static string password = string.Empty;
-    static decimal balance = 0;
+    private static SavingsAccount account;
 
     static void Main(string[] args)
     {
@@ -40,23 +117,24 @@ class BankSystem
             }
         }
     }
-    
-    //Register
+
+    // Register a user
     static void Register()
     {
         Console.Write("Enter your name: ");
-        userName = Console.ReadLine();
+        string name = Console.ReadLine();
 
         Console.Write("Set your password: ");
-        password = Console.ReadLine();
+        string pass = Console.ReadLine();
 
-        Console.WriteLine($"Registration successful! Welcome, {userName}.");
+        account = new SavingsAccount(name, pass);
+        Console.WriteLine($"Registration successful! Welcome, {account.GetUserName()}.");
     }
 
-    // login
+    // Login
     static bool Login()
     {
-        if (string.IsNullOrEmpty(userName) || string.IsNullOrEmpty(password))
+        if (account == null)
         {
             Console.WriteLine("No user registered yet. Please register first.");
             return false;
@@ -68,9 +146,9 @@ class BankSystem
         Console.Write("Enter your password: ");
         string inputPassword = Console.ReadLine();
 
-        if (inputName == userName && inputPassword == password)
+        if (inputName == account.GetUserName() && inputPassword == account.GetPassword())
         {
-            Console.WriteLine($"Login successful! Welcome back, {userName}.");
+            Console.WriteLine($"Login successful! Welcome back, {account.GetUserName()}.");
             return true;
         }
         else
@@ -80,7 +158,7 @@ class BankSystem
         }
     }
 
-    // bank operations
+    // menu
     static void BankOperations()
     {
         while (true)
@@ -96,7 +174,7 @@ class BankSystem
             switch (choice)
             {
                 case "1":
-                    Console.WriteLine($"Your current balance is: {balance:C}");
+                    account.CheckBalance();
                     break;
                 case "2":
                     DepositMoney();
@@ -114,40 +192,31 @@ class BankSystem
         }
     }
 
-    // deposit money
+    // Deposit
     static void DepositMoney()
     {
         Console.Write("Enter the amount to deposit: ");
-        if (decimal.TryParse(Console.ReadLine(), out decimal amount) && amount > 0)
+        if (decimal.TryParse(Console.ReadLine(), out decimal amount))
         {
-            balance += amount;
-            Console.WriteLine($"Deposit successful! Your new balance is: {balance:C}");
+            account.Deposit(amount);
         }
         else
         {
-            Console.WriteLine("Invalid amount. Please try again.");
+            Console.WriteLine("Invalid amount.");
         }
     }
 
-    // withdraw money
+    // Withdraw
     static void WithdrawMoney()
     {
         Console.Write("Enter the amount to withdraw: ");
-        if (decimal.TryParse(Console.ReadLine(), out decimal amount) && amount > 0)
+        if (decimal.TryParse(Console.ReadLine(), out decimal amount))
         {
-            if (amount <= balance)
-            {
-                balance -= amount;
-                Console.WriteLine($"Withdrawal successful! Your new balance is: {balance:C}");
-            }
-            else
-            {
-                Console.WriteLine("Insufficient balance. Please try again.");
-            }
+            account.Withdraw(amount);
         }
         else
         {
-            Console.WriteLine("Invalid amount. Please try again.");
+            Console.WriteLine("Invalid amount.");
         }
     }
 }
